@@ -1,18 +1,22 @@
 let grp, img;
+let hint = true;
 let img_scale = 0.15,
     frame = 3, // >= 2
-    d = 3;
+    d = 3,
+    grpx = 0;
 
 function preload() {
     img = loadImage('assets/ball-rotate.jpg');
 }
 
 function setup() {
-    createCanvas(500, 500);
+    createCanvas(windowWidth, windowHeight);
     imageMode(CENTER);
+    textAlign(CENTER, CENTER);
 
     grp = createGraphics(500, 500);
     drawLen();
+    grpx = width / 2;
 }
 
 function draw() {
@@ -26,7 +30,9 @@ function draw() {
         img.height * img_scale
     );
 
-    image(grp, mouseX, height / 2);
+    image(grp, grpx, height / 2);
+
+    drawHint();
 }
 
 function drawLen() {
@@ -37,6 +43,22 @@ function drawLen() {
 
     for (let x = 0; x < 500; x += frame * d)
         grp.rect(x, 0, (frame - 1) * d, height);
+}
+
+function drawHint() {
+    if (hint) {
+        fill('#333e');
+        noStroke();
+        rect(0, height / 2 - 100, width, 200);
+
+        fill(255);
+        text('← DRAG ME →', width / 2, height / 2);
+    }
+}
+
+function mouseDragged() {
+    hint = false;
+    grpx += mouseX - pmouseX;
 }
 
 function keyPressed() {
@@ -55,4 +77,9 @@ function keyPressed() {
 
 function mouseWheel(e) {
     img_scale += 0.05 * img_scale * (e.delta > 0 ? -1 : 1);
+}
+
+function windowResized() {
+    resizeCanvas(windowWidth, windowHeight, true);
+    grpx = width / 2;
 }
