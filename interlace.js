@@ -198,6 +198,15 @@ function detectPeriod(img, { min = 4, max = 150, step = 0.25 } = {}) {
     return best.p;
 }
 
+// Bề rộng hiển thị của sheet để lại dưới dạng SỐ THỰC. Làm tròn về pixel nguyên
+// sẽ đẩy tỉ lệ đi một chút, và chu kỳ sheet trên màn hình lệch khỏi chu kỳ mask
+// một lượng nhỏ nhưng DỒN LẠI qua vài chục chu kỳ. drawImage nhận số thực nên
+// không có lý do gì phải làm tròn.
+function sheetBox(srcW, srcH, sheetPeriod, maskPeriod) {
+    const scale = maskPeriod / sheetPeriod;
+    return { width: srcW * scale, height: srcH * scale, scale };
+}
+
 const api = {
     stripPlan,
     interlacePixels,
@@ -208,6 +217,7 @@ const api = {
     sheetGeometry,
     fitMaskPeriod,
     detectPeriod,
+    sheetBox,
 };
 
 if (typeof module !== 'undefined' && module.exports) module.exports = api;

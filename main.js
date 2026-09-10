@@ -143,6 +143,11 @@ function rescanSheetPeriod() {
     setSheetPeriod(detectSheetPeriod(state.sheet), true);
 }
 
+function nudgeSheetPeriod(delta) {
+    if (state.mode !== 'sheet') return;
+    setSheetPeriod(Math.round((state.sheetPeriod + delta) * 100) / 100, false);
+}
+
 function setSheetPeriod(period, refit) {
     if (!(period > 0)) return;
     state.sheetPeriod = period;
@@ -218,10 +223,12 @@ function rebuild() {
 
     if (state.mode === 'sheet') {
         if (!state.sheet) return;
-        state.box = {
-            width: Math.max(1, Math.round(state.srcW * g.scale)),
-            height: Math.max(1, Math.round(state.srcH * g.scale)),
-        };
+        state.box = Interlace.sheetBox(
+            state.srcW,
+            state.srcH,
+            state.sheetPeriod,
+            g.maskPeriod,
+        );
     } else {
         if (!state.baseFrames.length) return;
         state.box = Interlace.fitSize(
@@ -240,8 +247,8 @@ function rebuild() {
     }
 
     state.grating = Frames.gratingCanvas(
-        state.box.width + 2 * g.maskPeriod,
-        state.box.height,
+        Math.ceil(state.box.width) + 2 * g.maskPeriod,
+        Math.ceil(state.box.height),
         g.stripWidth,
         g.maskPeriod,
     );
@@ -368,6 +375,10 @@ function keyPressed() {
     else if (keyCode === RIGHT_ARROW) return (zoomBy(1), false);
     else if (keyCode === LEFT_ARROW) return (zoomBy(-1), false);
     else if (key === ' ') state.showGrating = !state.showGrating;
+    // Chu kỳ sheet vẽ tay không dò ra chính xác được (xem README), nên phải
+    // nhích được dưới pixel bằng mắt — bản gốc cũng chỉnh tay như vậy.
+    else if (key === '[') return (nudgeSheetPeriod(-0.05), false);
+    else if (key === ']') return (nudgeSheetPeriod(0.05), false);
     else return;
 
     rebuild();

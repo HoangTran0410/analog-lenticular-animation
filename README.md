@@ -77,9 +77,36 @@ Hệ quả: zoom nhảy theo bậc chu kỳ nguyên chứ không trượt liên 
 tục phá vỡ đẳng thức trên. Và đổi kích thước cửa sổ thì phải chọn lại chu kỳ mask
 mới refit được.
 
-Chu kỳ đo bằng autocorrelation 2D (lấy sai khác theo từng hàng rồi mới cộng —
-gộp các hàng về một hàng sẽ triệt tiêu pha), chạy độc lập trên 5 băng ngang và
-chỉ nhận khi các băng có nội dung cho cùng đáp số:
+### Vì sao không dò tự động hoàn toàn được
+
+Với sheet vẽ tay, **chu kỳ không phải một đại lượng xác định rõ**. Đo khoảng
+cách giữa các cặp răng liền kề trên `ball-rotate` cho ra một hỗn hợp chứ không
+phải một số:
+
+```
+y=1700:  59.8 59.9 59.9 59.9 60.0 50.0 60.1 50.0 60.0 60.0 50.0 60.1 50.0 ...
+y=1000:  69.7 69.9 69.9 51.7 70.0 70.1 60.0 70.1 70.1 60.0 70.1 70.0 60.0 ...
+```
+
+Mọi ước lượng chu kỳ vì thế chỉ là một kiểu trung bình của mớ 50/60/70 đó —
+đã thử bảy cách (autocorrelation 1D và 2D, biên độ DFT, tinh chỉnh dần theo lag
+dài có lọc thông cao, đếm răng trực tiếp, cực tiểu moiré, bám lưới nền) và
+chúng cho 55.5 đến 60. Chỉ `minecraft` (bám lưới 10.00px) và `woman`
+(9.85px) là có đáp số sạch; `ball-rotate` và `skull` thì không.
+
+Nên `detectPeriod()` là **điểm khởi đầu, không phải chân lý**. Chỉnh nốt bằng
+mắt với `[` `]` cho tới khi hết vằn — bản gốc của repo cũng chỉnh tay như vậy
+(`d += 0.1`). Sheet sinh bằng máy thì dò chính xác, không cần bước này.
+
+Một điều đã sửa được chắc chắn: bề rộng hiển thị của sheet để ở dạng số thực.
+Làm tròn về pixel nguyên đẩy chu kỳ thật lệch khỏi chu kỳ mask một lượng nhỏ
+nhưng dồn lại qua vài chục chu kỳ; `drawImage` nhận số thực nên không cần làm
+tròn. Có test giữ đẳng thức này.
+
+### Số đã đo cho các sheet có sẵn
+
+Autocorrelation 2D chạy độc lập trên 5 băng ngang, chỉ nhận khi các băng có
+nội dung cho cùng đáp số:
 
 | sheet | chu kỳ |
 |---|---|

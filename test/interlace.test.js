@@ -10,6 +10,7 @@ const {
     sheetGeometry,
     fitMaskPeriod,
     detectPeriod,
+    sheetBox,
 } = require('../interlace.js');
 
 test('stripPlan chia đủ n strip cho một chu kỳ', () => {
@@ -220,4 +221,41 @@ test('detectPeriod đúng với chu kỳ khác và tỉ lệ vạch khác', () =
 test('detectPeriod trả về chu kỳ cơ bản chứ không phải bội của nó', () => {
     const p = detectPeriod(comb(900, 40, 20, 6), { min: 4, max: 90 });
     assert.strictEqual(p, 20, `nhận được ${p}, có thể đã bắt nhầm bội số`);
+});
+
+// lược nằm trên một nền có bậc sáng/tối cỡ lớn — đúng hình dạng ball-rotate:
+// nửa trái nền sáng mực tối, nửa phải nền tối mực sáng
+function combOnStep(width, height, period, bar) {
+    const data = new Uint8ClampedArray(width * height * 4);
+    for (let y = 0; y < height; y++)
+        for (let x = 0; x < width; x++) {
+            const bright = x < width / 2 ? 255 : 0;
+            const v = x % period < bar ? 255 - bright : bright;
+            const i = (y * width + x) * 4;
+            data[i] = data[i + 1] = data[i + 2] = v;
+            data[i + 3] = 255;
+        }
+    return { width, height, data };
+}
+
+test('detectPeriod không bị bậc sáng/tối cỡ lớn kéo lệch', () => {
+    const p = detectPeriod(combOnStep(1200, 60, 12, 4), { min: 4, max: 60 });
+    assert.strictEqual(p, 12, `nhận được ${p}px thay vì 12px`);
+});
+
+test('sheetBox đặt chu kỳ sheet lên đúng chu kỳ mask, không làm tròn', () => {
+    // 3300px / chu kỳ 56.3 với mask 9px: bề rộng đúng là 527.53...px.
+    // Làm tròn thành 528 sẽ đẩy chu kỳ thật lên 9.008px -> lệch dồn ~0.5px
+    // trên cả ảnh. drawImage nhận số thực nên không cần làm tròn.
+    const box = sheetBox(3300, 2550, 56.3, 9);
+    const chuKyThat = (56.3 * box.width) / 3300;
+
+    assert.ok(
+        Math.abs(chuKyThat - 9) < 1e-9,
+        `chu kỳ thật ${chuKyThat}, cần đúng 9`,
+    );
+    assert.ok(
+        Math.abs(box.height / box.width - 2550 / 3300) < 1e-9,
+        'phải giữ tỉ lệ',
+    );
 });
